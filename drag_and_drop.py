@@ -114,7 +114,7 @@ class Baccarat :
  
         self.clock.tick(FPS)
 
-baccarat = Baccarat()
 
-while True : #while true 없어도 될 듯 
-    baccarat.run()
+#run
+baccarat = Baccarat()
+baccarat.run()

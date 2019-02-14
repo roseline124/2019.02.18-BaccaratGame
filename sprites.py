@@ -11,7 +11,6 @@ class Background(pg.sprite.Sprite):
         self.image = pg.transform.scale(self.image,SCREEN_SIZE)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = location
-
         
 class Player(pg.sprite.Sprite) : 
     def __init__(self, role) :

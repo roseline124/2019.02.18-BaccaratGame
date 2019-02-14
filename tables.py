@@ -138,7 +138,5 @@ class Cash_Table(pg.sprite.Sprite) :
         user.loss = sum(CURRENT_BET.values())
         print("you got", user.earnings,"!")
         print("you lost", user.loss,"!")
-
-        user.get_score(user.earnings, user.loss)
         print("your money :", USER_PROFILE['SEED_MONEY'])
 

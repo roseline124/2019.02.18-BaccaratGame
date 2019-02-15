@@ -93,6 +93,24 @@ class Chips(pg.sprite.Sprite) :
             self.rect.x = offset[0] + self.pos_X 
             self.rect.y = offset[1] + self.pos_Y 
 
+class Card(pg.sprite.Sprite) :
+    def __init__(self, game, image_file) :
+        self.groups = game.card_sprites
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.image = pg.image.load(image_file)
+        self.image = pg.transform.scale(self.image, CARD_SIZE)
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = BLIND_LOCATION
+
+    def draw(self, game) :
+        game.screen.blit(self.image, self.rect)
+
+    def rotate(self, sprite_image) :
+        pg.transform.rotate(sprite_image, 90)
+
+    def move(self) :
+        """move from blind_location to card_location"""
+        self.rect.x -=10
 
 class Button(pg.sprite.Sprite) :
     def __init__(self, game, image_file) :
@@ -103,13 +121,21 @@ class Button(pg.sprite.Sprite) :
         self.image = pg.transform.scale(self.image, BTN_SIZE)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = BTN_LOCATION
-
-    def clicked(self, event_pos, func, args) :
+ 
+    def clicked(self, event_pos) :
         """if button is clicked, return 1 / else return 0 """
         if (self.rect.collidepoint(event_pos)) & (self.is_clicked == False):
-            print("------------------------")
             self.is_clicked = True 
-            func(args)
             return 1
         else :
             return 0 
+
+    # def clicked(self, event_pos, func, args) :
+    #     """if button is clicked, return 1 / else return 0 """
+    #     if (self.rect.collidepoint(event_pos)) & (self.is_clicked == False):
+    #         print("------------------------")
+    #         self.is_clicked = True 
+    #         func(args)
+    #         return 1
+    #     else :
+    #         return 0 

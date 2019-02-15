@@ -6,6 +6,7 @@ from settings import *
 from tables import *
 from sprites import *
 from pygame.locals import *
+import time
 
 #Baccarat.py
 class Baccarat : 
@@ -16,7 +17,9 @@ class Baccarat :
         self.clock = pg.time.Clock()
     
     def new(self) : #init sprites
+        """init index equals blit index"""
         self.all_sprites = pg.sprite.Group() #sprites.group
+        self.card_sprites = pg.sprite.Group() 
         self.background = Background(self, 'image/background_image.png', (0,0))
         
         #gamers
@@ -31,11 +34,11 @@ class Baccarat :
         self.blue_chip = Chips(self, BLUE_CHIP)
         self.black_chip = Chips(self, BLACK_CHIP)
 
-        self.orange_chip.new('image/orange_chip.png', CARD_LOCATION)
-        self.green_chip.new('image/green_chip.png', CARD_LOCATION2)
-        self.red_chip.new('image/red_chip.png', CARD_LOCATION3)
-        self.blue_chip.new('image/blue_chip.png', CARD_LOCATION4)
-        self.black_chip.new('image/black_chip.png', CARD_LOCATION5)
+        self.orange_chip.new('image/orange_chip.png', CHIP_LOCATION)
+        self.green_chip.new('image/green_chip.png', CHIP_LOCATION2)
+        self.red_chip.new('image/red_chip.png', CHIP_LOCATION3)
+        self.blue_chip.new('image/blue_chip.png', CHIP_LOCATION4)
+        self.black_chip.new('image/black_chip.png', CHIP_LOCATION5)
         
         #tables
         self.card_table = Card_Table()
@@ -59,10 +62,29 @@ class Baccarat :
         #operating elements 
         self.finish_btn = Button(self, 'image/finish_btn.png')
 
+        #dealed cards
+        self.card_list = []
+
+        self.card_list.append(self.card_table.deal(self.player))
+        self.card_list.append(self.card_table.deal(self.banker))
+        self.card_list.append(self.card_table.deal(self.player))
+        self.card_list.append(self.card_table.deal(self.banker))
+
+        #player & banker cards
+        self.p_card1 = Card(self, 'image/card_'+str(self.card_list[0])+'.png')
+        self.b_card1 = Card(self, 'image/card_'+str(self.card_list[1])+'.png')
+        self.p_card2 = Card(self, 'image/card_'+str(self.card_list[2])+'.png')
+        self.b_card2 = Card(self, 'image/card_'+str(self.card_list[3])+'.png')
+
+        self.card_sprites_list = [self.p_card1, self.b_card1, self.p_card2 , self.b_card2]
+
     def run(self) :
         self.playing = True 
         self.drag = False
-        
+        self.answer = 0
+        self.deal_finished = False
+        self.card_moved = False
+
         while self.playing : 
 
             pg.time.delay(100) #pause the program for the amount of time
@@ -70,7 +92,6 @@ class Baccarat :
             self.update()
             self.draw()
 
-    
     def quit(self) :
         pg.quit()
         sys.exit()
@@ -85,7 +106,8 @@ class Baccarat :
             elif event.type == pg.KEYDOWN :
                 if event.key == pg.K_ESCAPE :
                     self.quit()
-                    
+
+            #Control Game         
             #Mouse #betting
             elif event.type == pg.MOUSEBUTTONDOWN :
                 if event.button == 1 :
@@ -96,46 +118,9 @@ class Baccarat :
                     self.offset_sky = self.blue_chip.mouse_down(event.pos)  
                     self.offset_black = self.black_chip.mouse_down(event.pos) 
 
-                    #deal
-                    print("dealing")
-                    self.answer = self.finish_btn.clicked(event.pos, self.card_table.deal, (self.player))
-                    if self.answer == 1 : 
-                        self.card_table.deal(self.banker)
-                        self.card_table.deal(self.player)
-                        self.card_table.deal(self.banker)
-
-                        #count
-                        print("counting")
-                        self.score_table.count(self.player)
-                        self.score_table.count(self.banker)
-                        
-                        #check values
-                        print("checking")
-                        self.score_table.check_value(self.player)
-                        self.score_table.check_value(self.player)
-
-                        #one more draw?
-                        if (self.player.value == 'nothing') & (self.banker.value == 'nothing') :
-                            print("-------------------------------------------\n",
-                                "One more card!")
-
-                            self.card_table.one_more(self.player, self.banker)
-
-                        #score again
-                        self.score_table.count(self.player)
-                        self.score_table.count(self.banker)
-
-                        #record
-                        self.record_table.record(self.player, self.banker)
-
-                        #pay 
-                        self.cash_table = Cash_Table()
-                        self.cash_table.pay(self.user)
-
-                        print("-------------------------------------------\n"+
-                        "your score : %d\n" %self.user.get_score(self.user.earnings, self.user.loss) +
-                        "your money : %d\n" %USER_PROFILE['SEED_MONEY'] +
-                        "your grade : %s\n" %self.user.rank(),)
+                    
+                    self.answer = self.finish_btn.clicked(event.pos)
+                    
 
             elif event.type == pg.MOUSEBUTTONUP : 
                 if event.button == 1 :
@@ -154,16 +139,76 @@ class Baccarat :
                     self.green_chip.mouse_drag(event.pos, self.offset_g)                                        
                     self.red_chip.mouse_drag(event.pos, self.offset_r)                                        
                     self.blue_chip.mouse_drag(event.pos, self.offset_sky)                                        
-                    self.black_chip.mouse_drag(event.pos, self.offset_black)                                        
+                    self.black_chip.mouse_drag(event.pos, self.offset_black) 
+
+            #control game
+            elif self.card_moved : 
+                #count
+                print("counting")
+                self.score_table.count(self.player)
+                self.score_table.count(self.banker)
+                
+                #check values
+                print("checking")
+                self.score_table.check_value(self.player)
+                self.score_table.check_value(self.player)
+
+                #one more draw?
+                if (self.player.value == 'nothing') & (self.banker.value == 'nothing') :
+                    print("-------------------------------------------\n",
+                        "One more card!")
+
+                    self.card_table.one_more(self.player, self.banker)
+
+                #score again
+                self.score_table.count(self.player)
+                self.score_table.count(self.banker)
+
+                #record
+                self.record_table.record(self.player, self.banker)
+
+                #pay 
+                self.cash_table = Cash_Table()
+                self.cash_table.pay(self.user)
+
+                print("-------------------------------------------\n"+
+                "your score : %d\n" %self.user.get_score(self.user.earnings, self.user.loss) +
+                "your money : %d\n" %USER_PROFILE['SEED_MONEY'] +
+                "your grade : %s\n" %self.user.rank(),)
+
+                time.sleep(3)                                       
         
     def update(self) :
         self.all_sprites.update()
+        self.card_sprites.update()
         pg.display.flip() #draw 
+
         
     def draw(self) :
         self.screen.fill(BLACK)
         self.all_sprites.draw(self.screen)
         self.clock.tick(FPS)
+
+        if self.answer == 1 :
+            for s in self.card_sprites_list :
+                s.draw(self)
+
+            self.deal_finished = True 
+
+        if self.deal_finished == True :
+            if self.p_card1.rect.x != CARD_LOCATIONS[0][0] :
+                self.p_card1.move()
+            elif self.b_card1.rect.x != CARD_LOCATIONS[1][0] :
+                self.b_card1.move()
+            elif self.p_card2.rect.x != CARD_LOCATIONS[2][0] :
+                self.p_card2.move()
+            elif self.b_card2.rect.x != CARD_LOCATIONS[3][0] :
+                self.b_card2.move()
+
+            if self.b_card2.rect.x <= CARD_LOCATIONS[3][0] :
+                self.card_moved = True
+
+
 
         
 if __name__ == "__main__":

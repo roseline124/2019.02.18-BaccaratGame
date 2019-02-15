@@ -19,12 +19,11 @@ class Card_Table(pg.sprite.Sprite) :
         pg.sprite.Sprite.__init__(self)
 
     def deal(self, player) :
-        print("Draw!")
-        
         self.card = random.sample(DECK.keys(), 1)
         player.cards.append(self.card[0])
-
-        print(player.role,":",player.cards)
+       
+        # print(player.role,"Draw |", player.cards)
+        return self.card[0]
 
     #one_more_card 
     def one_more(self, player, banker) :
@@ -44,6 +43,7 @@ class Card_Table(pg.sprite.Sprite) :
             self.deal(banker)
         print("player one more :", player.cards)
         print("banker one more :", player.cards)
+
 
 class Score_Table(pg.sprite.Sprite) :
     def __init__(self) :

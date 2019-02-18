@@ -18,7 +18,7 @@ class Player(pg.sprite.Sprite) :
         self.role = role
         self.cards = []
         self.score = 0
-        self.value = 'Nothing'
+        self.value = ''
         self.record = {'win' : 0, 'lose' : 0, 'pair' : 0, 'tie' : 0 }  
 
 
@@ -54,11 +54,13 @@ class Chips(pg.sprite.Sprite) :
     def __init__(self, game, chips) :
         self.groups = game.all_sprites
         pg.sprite.Sprite.__init__(self, self.groups)  #자기 자신과 baccarat로 부터 받은 그룹 초기화
+        self.game = game 
         self.chip = chips
+        self.drag = False
         self.is_betted = False
         self.is_selected = False
     
-    def new(self, image_file, location) :
+    def make(self, image_file, location) :
         self.image = pg.image.load(image_file)
         self.image = pg.transform.scale(self.image,CHIP_SIZE)
 
@@ -93,49 +95,109 @@ class Chips(pg.sprite.Sprite) :
             self.rect.x = offset[0] + self.pos_X 
             self.rect.y = offset[1] + self.pos_Y 
 
+    def update(self) :
+        for event in self.game.get_events :
+            if event.type == pg.MOUSEBUTTONDOWN :
+                if event.button == 1 : #event type이 mouse인 경우에만 button 요소가 생기므로 if문 안에 써주는 게 맞다. 
+                    self.drag = True
+                    self.offset = self.mouse_down(event.pos) 
+
+            elif event.type == pg.MOUSEBUTTONUP : 
+                if event.button == 1 : 
+                    self.drag = False
+
+                    if self.game.finish_btn.is_clicked == False : 
+                        self.bet(self.game.betting_table)
+            
+            elif event.type == pg.MOUSEMOTION  : 
+                if self.drag : 
+                    self.mouse_drag(event.pos, self.offset)
+
 class Card(pg.sprite.Sprite) :
-    def __init__(self, game, image_file) :
+    def __init__(self, game, image_file, card_location, is_normal=True) :
         self.groups = game.card_sprites
-        pg.sprite.Sprite.__init__(self, self.groups)
+        pg.sprite.Sprite.__init__(self, self.groups) #초기화해야 self.groups_list에 추가된다. 
+        self.groups_list = game.card_sprites.sprites()
+        self.game = game
+
         self.image = pg.image.load(image_file)
         self.image = pg.transform.scale(self.image, CARD_SIZE)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = BLIND_LOCATION
+        self.destination = card_location
+        self.vx = 0 
+      
+        if is_normal == False : 
+            self.image = pg.transform.rotate(self.image, 90)
+            self.rect.x, self.rect.y = ONE_MORE_CARD_BLIND_LOCATION
 
-    def draw(self, game) :
-        game.screen.blit(self.image, self.rect)
-
-    def rotate(self, sprite_image) :
-        pg.transform.rotate(sprite_image, 90)
-
-    def move(self) :
+    def move_to(self) :
         """move from blind_location to card_location"""
-        self.rect.x -=10
+        self.vx = 0 
+
+        if self.game.deal_finished : 
+            self.vx = -CARD_SPEED if self.rect.x > self.destination else 0 
+
+        if self.vx != 0 : 
+            self.vx*= VX_TIME
+
+    def update(self) :
+        self.move_to()
+        self.rect.x += self.vx*self.game.dt 
 
 class Button(pg.sprite.Sprite) :
-    def __init__(self, game, image_file) :
+    def __init__(self, game, image_file, call_func=None, args=None) :
         self.groups = game.all_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
+        self.game = game 
         self.is_clicked = False
         self.image = pg.image.load(image_file)
         self.image = pg.transform.scale(self.image, BTN_SIZE)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = BTN_LOCATION
- 
-    def clicked(self, event_pos) :
-        """if button is clicked, return 1 / else return 0 """
-        if (self.rect.collidepoint(event_pos)) & (self.is_clicked == False):
-            self.is_clicked = True 
-            return 1
-        else :
-            return 0 
 
-    # def clicked(self, event_pos, func, args) :
-    #     """if button is clicked, return 1 / else return 0 """
-    #     if (self.rect.collidepoint(event_pos)) & (self.is_clicked == False):
-    #         print("------------------------")
-    #         self.is_clicked = True 
-    #         func(args)
-    #         return 1
-    #     else :
-    #         return 0 
+        #this button is trigger to call func() with args 
+        self.func = call_func 
+        self.args = args
+ 
+    def clicked(self) :
+        """if button is clicked, return 1 / else return 0 """
+        if self.is_clicked == False : 
+            self.is_clicked = True
+
+            if self.func != None :
+                self.func(self.args)
+
+    def update(self) :
+        for event in self.game.get_events : 
+            if event.type == pg.MOUSEBUTTONDOWN : 
+                if (self.rect.collidepoint(event.pos)) & (event.button == 1) : 
+                    self.clicked() 
+
+class Flag(pg.sprite.Sprite) :
+    def __init__(self, game, image_file) :
+        self.groups = game.flag_sprites
+        pg.sprite.Sprite.__init__(self, self.groups) 
+        self.game = game
+
+        self.image = pg.image.load(image_file)
+        self.image = pg.transform.scale(self.image, FLAG_SIZE)
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = FLAG_BLIND_LOCATION
+        self.vy = 0 
+      
+    def move_to(self) :
+        """move from blind_location to flag_location"""
+        self.vy = 0 
+
+        if (self.game.game_over) & (self.game.is_announced == False): 
+            self.vy = +FLAG_SPEED if self.rect.y < FLAG_LOCATION[1] else 0 
+            self.game.is_announced = True if self.rect.y > FLAG_LOCATION[1] else False
+
+        if self.vy != 0 : 
+            self.vy*= VY_TIME
+
+    def update(self) :
+        self.move_to()
+        self.rect.y += self.vy*self.game.dt 
+

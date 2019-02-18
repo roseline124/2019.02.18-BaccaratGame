@@ -7,104 +7,170 @@ class Bet_Table(pg.sprite.Sprite) :
     def __init__(self, game, image_file, location) :
         self.groups = game.all_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
-        
+
         self.image = pg.image.load(image_file)
         self.image = pg.transform.scale(self.image,TB_SIZE)
 
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = location
-
+        
 class Card_Table(pg.sprite.Sprite) :
-    def __init__(self) :
+    def __init__(self, game) :
         pg.sprite.Sprite.__init__(self)
+        self.game = game 
+        self.hand_is_full = False 
 
     def deal(self, player) :
         self.card = random.sample(DECK.keys(), 1)
         player.cards.append(self.card[0])
        
-        # print(player.role,"Draw |", player.cards)
         return self.card[0]
 
-    #one_more_card 
-    def one_more(self, player, banker) :
+    def one_more(self) :
+        
+        self.player = self.game.player
+        self.banker = self.game.banker
+
+        self.hand_is_full = True
+
+        print("-------------------------------------------\n"+
+            "<one more card>")
+
         #player's 'one more card'
-        self.deal(player)
+        self.deal(self.player)
 
         #banker's 'one more card'
-        if banker.score <= 2 : 
-            self.deal(banker)
-        elif (banker.score == 3) & (player.cards[2] != 8) :
-            self.deal(banker)
-        elif (banker.score == 4) & (player.cards[2] in range(2,8)) :
-            self.deal(banker)
-        elif (banker.score == 5) & (player.cards[2] in range(4,8)) :
-            self.deal(banker)
-        elif (banker.score == 6) & (player.cards[2] in range(6,8)) :
-            self.deal(banker)
-        print("player one more :", player.cards)
-        print("banker one more :", player.cards)
+        if self.banker.score <= 2 : 
+            self.deal(self.banker)
+        elif (self.banker.score == 3) & (self.player.cards[2] != 8) :
+            self.deal(self.banker)
+        elif (self.banker.score == 4) & (self.player.cards[2] in range(2,8)) :
+            self.deal(self.banker)
+        elif (self.banker.score == 5) & (self.player.cards[2] in range(4,8)) :
+            self.deal(self.banker)
+        elif (self.banker.score == 6) & (self.player.cards[2] in range(6,8)) :
+            self.deal(self.banker)
+        print("player one more :", self.player.cards)
+        print("banker one more :", self.banker.cards)
+        print("-------------------------------------------\n")
+
+
+    def update(self) :
+        if (self.game.need_one_more) & (self.hand_is_full == False): 
+
+            self.one_more()
 
 
 class Score_Table(pg.sprite.Sprite) :
-    def __init__(self) :
+    def __init__(self, game) :
+        pg.font.init()
         pg.sprite.Sprite.__init__(self)
+        self.game = game
+        self.is_counted = False 
+        self.is_checked = False 
+        self.is_one_more_check = False
+        self.text = pg.font.SysFont('arial', 20,bold=1)
 
     def count(self, player) :
-        self.num = [0,0,0]
-        
-        for i in range(2) : 
-            self.num[i] = DECK[player.cards[i]]
-        
+        self.card_num = len(player.cards) #one more card에 대비 
+        self.num = [ DECK[player.cards[i]] for i in range(self.card_num) ]
+
         self.card_sum = sum(self.num)%10
         player.score = self.card_sum
 
+        return self.card_sum
+
+
     def check_value(self, player) :
+        self.value = '' 
+
         #Natural
         if player.score >= 8 :
-            player.value = 'natural'
+            self.value = 'natural'
         
         #Stand
         elif player.score >= 6 : 
-            if (player.role == 'banker') & (player.score==6) :
-                player.value = 'nothing'
-            else : 
-                player.value = 'stand'
+            self.value = 'nothing' if (player.role == 'banker') & (player.score==6) else 'stand'
                     
         #Nothing 
         else : 
-            player.value = 'nothing'
+            self.value = 'nothing'
+
+        return self.value
+
+
+    def update(self) :
+        if ((self.game.deal_finished) & (self.is_counted == False)) |  ((self.game.full_drew) & (self.is_one_more_check==False)) :
+            print("counting")
+            self.p_score = self.count(self.game.player)
+            self.b_score = self.count(self.game.banker)
+
+            self.text_p_score = self.text.render(('Player Score : '+ str(self.p_score)), False, BLACK)
+            self.text_b_score = self.text.render(('Banker Score : '+ str(self.b_score)), False, BLACK)
+
+            self.is_counted = True #role such as 'break' 
+            self.is_checked = False # for one more check
+            self.is_one_more_check = True if self.game.full_drew else False
+
+        if ((self.is_counted) & (self.is_checked == False)) : 
+            print("checking")
+            self.p_value = self.check_value(self.game.player)
+            self.b_value = self.check_value(self.game.banker)
+
+            self.font_color = RED if self.is_one_more_check else BLACK
+            self.cation = "[One]" if self.is_one_more_check else ''
+
+            self.text_p_value = self.text.render((self.cation+'Player Value : '+self.p_value), False, self.font_color)
+            self.text_b_value = self.text.render((self.cation+'Banker Value : '+self.b_value), False, self.font_color)
+
+            self.game.need_one_more = True if (self.p_value == 'nothing') & (self.b_value == 'nothing') & (self.is_one_more_check==False) else False
+            self.game.game_over = False if self.game.need_one_more else True  
+
+            self.is_checked = True #role such as 'break' 
 
 
 class Record_table(pg.sprite.Sprite) : 
-    def __init__(self) :
+    def __init__(self, game) :
+        self.game = game
         pg.sprite.Sprite.__init__(self)
+        self.is_recorded = False
+        self.text = pg.font.SysFont('arial', 20, bold=1)
 
-    def record(self, player, banker) :
+    def record(self) :
+        self.player = self.game.player
+        self.banker = self.game.banker
+
         #win & lose
-        if player.score > banker.score : 
-            player.record['win'] += 1
-            banker.record['lose'] += 1
-            CURRENT_RECORD['winner'] = player.role
+        if self.player.score > self.banker.score : 
+            self.player.record['win'] += 1
+            self.banker.record['lose'] += 1
+            CURRENT_RECORD['winner'] = self.player.role
             
-        elif player.score < banker.score :
-            player.record['lose'] += 1
-            banker.record['win'] += 1
-            CURRENT_RECORD['winner'] = banker.role
+        elif self.player.score < self.banker.score :
+            self.player.record['lose'] += 1
+            self.banker.record['win'] += 1
+            CURRENT_RECORD['winner'] = self.banker.role
 
         #tie
-        elif player.score == banker.score :
-            player.record['tie'] += 1
-            banker.record['tie'] += 1
+        elif self.player.score == self.banker.score :
+            self.player.record['tie'] += 1
+            self.banker.record['tie'] += 1
             CURRENT_RECORD['tie'] = True
 
         #pair
-        if player.cards[0] == player.cards[1] :
-            player.record['pair'] += 1
+        if self.player.cards[0] == self.player.cards[1] :
+            self.player.record['pair'] += 1
             CURRENT_RECORD['player_pair'] = True
 
-        if banker.cards[0] == banker.cards[1] :
-            banker.record['pair'] += 1
+        if self.banker.cards[0] == self.banker.cards[1] :
+            self.banker.record['pair'] += 1
             CURRENT_RECORD['banker_pair'] = True
+
+    def update(self):
+        if (self.game.game_over) & (self.is_recorded == False) : 
+            print("recording")
+            self.is_recorded = True
+            self.record()
 
 
 class Cash_Table(pg.sprite.Sprite) :
@@ -139,4 +205,3 @@ class Cash_Table(pg.sprite.Sprite) :
         print("you got", user.earnings,"!")
         print("you lost", user.loss,"!")
         print("your money :", USER_PROFILE['SEED_MONEY'])
-

@@ -39,6 +39,8 @@ class Baccarat :
         self.card_table = Card_Table(self)
         self.score_table = Score_Table(self)
         self.record_table = Record_table(self)
+        self.cash_table = Cash_Table(self)
+
 
         #betting tables 
         self.tb_list = [Bet_Table(self,('image/tb_'+BET_OPTIONS[i]+'.png'), BETTING_POS[i]) for i in range(5)]
@@ -52,19 +54,23 @@ class Baccarat :
         self.card_list = [Card(self, ('image/card_'+str(self.card_list[i])+'.png'), CARD_LOCATIONS[i][0]) for i in range(4)]
 
         #trigger button #write func, instead of func()
-        self.finish_btn = Button(self, 'image/finish_btn.png')
+        self.finish_btn = Button(self, 'image/finish_btn.png', FIN_BTN_LOCATION, FIN_BTN_SIZE)
 
         self.flag = Flag(self, 'image/winner_flag.png')
 
+
     def run(self) :
+        print("run again")
+        self.new()
         self.playing = True 
+        self.paused = False 
         #control this game
         self.deal_finished = False
         self.need_one_more = False
+        self.game_over = False 
         self.full_drew = False
-        self.game_over = False
         self.is_announced = False
-        self.is_false = 'sskskdfs'
+        self.is_created = False
 
         while self.playing : 
 
@@ -73,6 +79,19 @@ class Baccarat :
             self.events()
             self.update()
             self.draw()
+
+            #play again?
+            if self.game_over & (self.is_created==False) : 
+                #Yes or No Button
+                self.yes_btn = Button(self, 'image/yes_btn.png', YES_BTN_LOCATION, YES_NO_BTN_SIZE, self.run) 
+                self.no_btn = Button(self, 'image/no_btn.png', NO_BTN_LOCATION, YES_NO_BTN_SIZE, self.quit) 
+                self.is_created = True 
+
+                # if self.play_again() : 
+                    # self.run()
+                # else:
+                    # break
+
 
     def quit(self) :
         pg.quit()
@@ -88,17 +107,8 @@ class Baccarat :
             elif event.type == pg.KEYDOWN :
                 if event.key == pg.K_ESCAPE :
                     self.quit()
-
-            elif event.type == self.is_false :
-
-                #pay 
-                self.cash_table = Cash_Table()
-                self.cash_table.pay(self.user)
-
-                print("-------------------------------------------\n"+
-                "your score : %d\n" %self.user.get_score(self.user.earnings, self.user.loss) +
-                "your money : %d\n" %USER_PROFILE['SEED_MONEY'] +
-                "your grade : %s\n" %self.user.rank(),)
+            else : 
+                return self.get_events
 
     def update(self) :
         self.all_sprites.update()
@@ -106,6 +116,7 @@ class Baccarat :
         self.score_table.update()
         self.card_table.update()
         self.record_table.update()
+        self.cash_table.update()
         self.flag_sprites.update()
         pg.display.flip() #draw 
         
@@ -114,18 +125,22 @@ class Baccarat :
         self.all_sprites.draw(self.screen)
         self.clock.tick(FPS)
 
+        #deal card
         if self.finish_btn.is_clicked :
             self.card_sprites.draw(self.screen)
             self.deal_finished = True 
 
+        #count score
         if self.score_table.is_counted : 
             self.screen.blit(self.score_table.text_p_score, P_SCORE_LOCATION)
             self.screen.blit(self.score_table.text_b_score, B_SCORE_LOCATION)
 
+        #check value
         if self.score_table.is_checked : 
             self.screen.blit(self.score_table.text_p_value, P_VALUE_LOCATION)
             self.screen.blit(self.score_table.text_b_value, B_VALUE_LOCATION)
 
+        #one more card
         if (self.card_table.hand_is_full) & (self.full_drew==False): 
             self.full_drew = True
             self.card_list.append(Card(self, ('image/card_'+str(self.player.cards[2])+'.png'), CARD_LOCATIONS[4][0],is_normal=False))
@@ -133,12 +148,10 @@ class Baccarat :
             if len(self.banker.cards) == 3 : 
                 self.card_list.append(Card(self, ('image/card_'+str(self.banker.cards[2])+'.png'), CARD_LOCATIONS[5][0],is_normal=False))
 
-        # if (self.record_table.is_recorded) :
-        #     self.flag_sprites.draw(self.screen)
+        #record : show winner
 
 
 if __name__ == "__main__":
     baccarat = Baccarat()
 
-    baccarat.new()
     baccarat.run()

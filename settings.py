@@ -1,6 +1,7 @@
 #Color
 BLACK = (0,0,0)
 RED = (255,0,0)
+GRAY = (51,51,51)
 
 #Size
 SCREEN_SIZE = (800,500)
@@ -8,7 +9,8 @@ CARD_SIZE = (120,180)
 FLAG_SIZE = (250,150)
 TB_SIZE = (100,150)
 CHIP_SIZE = (50,50)
-BTN_SIZE = (200,50)
+FIN_BTN_SIZE = (200,50)
+YES_NO_BTN_SIZE = (100,50)
 
 PLAY_CHIPS = {'ORANGE_CHIP' : 1, 
                'GREEN_CHIP' : 5, 
@@ -34,9 +36,12 @@ CHIP_LOCATIONS = [
         [425,400], #black
 ]
 
-BTN_LOCATION = [550,425]
+FIN_BTN_LOCATION = [550,425]
+YES_BTN_LOCATION = [100,425]
+NO_BTN_LOCATION = [200,425]
 
-BLIND_LOCATION = [900, 50]
+
+BLIND_LOCATION = [SCREEN_SIZE[0]+100, 50]
 ONE_MORE_CARD_BLIND_LOCATION = [900, 240]
 FLAG_BLIND_LOCATION = [200,-200]
 
@@ -58,6 +63,18 @@ B_SCORE_LOCATION = (380, 240)
 
 P_VALUE_LOCATION = (50, 265)
 B_VALUE_LOCATION = (380, 265)
+
+USER_PROFILE_LOCATION = [
+        (560, 330), #earnings
+        (560, 360), #bet money
+        (560, 390), #current money 
+]
+
+RECORD_LOCATION = [
+        [200,100], #it has to move along with flag, that's why the type is list, not tuple
+         
+
+]
 
 FPS = 60
 
@@ -90,7 +107,7 @@ DECK = {
 
 #Record 
 CURRENT_RECORD = {
-        'winner' : '',
+        'winner' : None,
         'tie' : False,
         'player_pair' : False,
         'banker_pair' : False

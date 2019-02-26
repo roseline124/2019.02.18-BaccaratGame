@@ -146,15 +146,15 @@ class Card(pg.sprite.Sprite) :
         self.rect.x += self.vx*self.game.dt 
 
 class Button(pg.sprite.Sprite) :
-    def __init__(self, game, image_file, call_func=None, args=None) :
+    def __init__(self, game, image_file, location, size, call_func=None, args=None) :
         self.groups = game.all_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
         self.game = game 
         self.is_clicked = False
         self.image = pg.image.load(image_file)
-        self.image = pg.transform.scale(self.image, BTN_SIZE)
+        self.image = pg.transform.scale(self.image, size)
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = BTN_LOCATION
+        self.rect.x, self.rect.y = location
 
         #this button is trigger to call func() with args 
         self.func = call_func 
@@ -166,7 +166,11 @@ class Button(pg.sprite.Sprite) :
             self.is_clicked = True
 
             if self.func != None :
-                self.func(self.args)
+                if self.args != None : 
+                    self.func(self.args)
+                else : 
+                    self.func()
+
 
     def update(self) :
         for event in self.game.get_events : 
@@ -200,4 +204,3 @@ class Flag(pg.sprite.Sprite) :
     def update(self) :
         self.move_to()
         self.rect.y += self.vy*self.game.dt 
-

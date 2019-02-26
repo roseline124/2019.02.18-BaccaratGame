@@ -7,13 +7,27 @@ class Bet_Table(pg.sprite.Sprite) :
     def __init__(self, game, image_file, location) :
         self.groups = game.all_sprites
         pg.sprite.Sprite.__init__(self, self.groups)
+        self.text = pg.font.SysFont('arial', 20)
+        self.game = game
 
         self.image = pg.image.load(image_file)
         self.image = pg.transform.scale(self.image,TB_SIZE)
 
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = location
-        
+    
+    def show_bet(self) :
+        self.bet_money = self.text.render( ("bet money :" + str(sum(CURRENT_BET.values()))),False,BLACK)
+        self.curr_money = self.text.render(("current money :"+str(USER_PROFILE['SEED_MONEY'])),False,BLACK)
+    
+        self.game.screen.blit(self.bet_money, USER_PROFILE_LOCATION[0])
+        self.game.screen.blit(self.curr_money, USER_PROFILE_LOCATION[1])
+
+    def update(self) :
+        self.show_bet()
+
+
+
 class Card_Table(pg.sprite.Sprite) :
     def __init__(self, game) :
         pg.sprite.Sprite.__init__(self)
@@ -166,6 +180,8 @@ class Record_table(pg.sprite.Sprite) :
             self.banker.record['pair'] += 1
             CURRENT_RECORD['banker_pair'] = True
 
+        print(CURRENT_RECORD)
+
     def update(self):
         if (self.game.game_over) & (self.is_recorded == False) : 
             print("recording")
@@ -174,34 +190,72 @@ class Record_table(pg.sprite.Sprite) :
 
 
 class Cash_Table(pg.sprite.Sprite) :
-    def __init__(self) :
+    def __init__(self, game) :
         pg.sprite.Sprite.__init__(self)
-    
-    def pay(self, user) :
+        self.game = game
+        self.user = self.game.user
+        self.text = pg.font.SysFont('arial', 20, bold=1)
+        self.is_paid = False 
+        
+
+    def pay(self) :
+        self.winner = CURRENT_RECORD['winner']
+        self.tie = CURRENT_RECORD['tie']
+        self.p_pair = CURRENT_RECORD['player_pair']
+        self.b_pair = CURRENT_RECORD['banker_pair']
+
         #win & lose
-        if CURRENT_RECORD['winner'] == 'player' : 
-            user.earnings += CURRENT_BET['player']*2
+        if self.winner == 'player' : 
+            self.user.earnings += CURRENT_BET['player']*2
             CURRENT_BET['player'] = 0
-        elif CURRENT_RECORD['winner'] == 'banker' :
-            user.earnings += CURRENT_BET['banker']*1.95
+        elif self.winner == 'banker' :
+            self.user.earnings += CURRENT_BET['banker']*1.95
             CURRENT_BET['banker'] = 0
-            
+            print("winner -- ")
         #tie
-        elif CURRENT_RECORD['tie'] == True : 
-            user.earnings += CURRENT_BET['tie']*8
+        elif self.tie == True : 
+            self.user.earnings += CURRENT_BET['tie']*8
             CURRENT_BET['tie'] = 0
+            print("tie -- ")
+
         
         #pair
-        if CURRENT_RECORD['player_pair']==True :
-            user.earnings += CURRENT_BET['player_pair']*11
+        if self.p_pair==True :
+            self.user.earnings += CURRENT_BET['player_pair']*11
             CURRENT_BET['player_pair'] = 0
         
-        if CURRENT_RECORD['banker_pair']==True :
-            user.earnings += CURRENT_BET['banker_pair']*11
+        if self.b_pair==True :
+            self.user.earnings += CURRENT_BET['banker_pair']*11
             CURRENT_BET['banker_pair'] = 0
+            print("pair -- ")
+
       
-        USER_PROFILE['SEED_MONEY'] += user.earnings
-        user.loss = sum(CURRENT_BET.values())
-        print("you got", user.earnings,"!")
-        print("you lost", user.loss,"!")
-        print("your money :", USER_PROFILE['SEED_MONEY'])
+        USER_PROFILE['SEED_MONEY'] += self.user.earnings
+        self.user.loss = sum(CURRENT_BET.values())
+        self.is_paid = True 
+        print("you got", self.user.earnings,"!")
+        print("you lost", self.user.loss,"!")
+        # print("your money :", USER_PROFILE['SEED_MONEY'])
+
+    def show_winner(self) :
+        #text
+        if self.winner : 
+            self.winner = self.text.render("Winner : "+ CURRENT_RECORD['winner'],False, GRAY )
+            self.game.screen.blit(self.winner, RECORD_LOCATION[0])
+        
+        elif self.tie : 
+            self.tie = self.text.render("Tie",False, GRAY)
+            self.game.screen.blit(self.tie, RECORD_LOCATION[0])
+        
+        if self.p_pair :
+            self.p_pair = self.text.render("Palyer Pair", False, GRAY)
+            self.game.screen.blit(self.p_pair, RECORD_LOCATION[0])
+
+        if self.b_pair : 
+            self.b_pair = self.text.render("Banker Pair", False, GRAY)
+            self.game.screen.blit(self.b_pair, RECORD_LOCATION[0])
+
+
+    def update(self) :
+        if self.game.record_table.is_recorded : 
+            self.pay() if self.is_paid == False else self.show_winner()

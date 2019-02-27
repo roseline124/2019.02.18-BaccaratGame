@@ -1,3 +1,5 @@
+import pickle
+
 #Color
 BLACK = (0,0,0)
 RED = (255,0,0)
@@ -72,8 +74,6 @@ USER_PROFILE_LOCATION = [
 
 RECORD_LOCATION = [
         [200,100], #it has to move along with flag, that's why the type is list, not tuple
-         
-
 ]
 
 FPS = 60
@@ -111,11 +111,5 @@ CURRENT_RECORD = {
         'tie' : False,
         'player_pair' : False,
         'banker_pair' : False
-}
-
-USER_PROFILE = {
-        'SEED_MONEY' : 100*10000,
-        'GRADE' : 'GOLD',
-        'SCORE' : 25*10000
 }
 

@@ -4,6 +4,7 @@ import pygame as pg
 from settings import *
 from tables import *
 from sprites import *
+from user_profile import *
 from pygame.locals import *
 import time
 
@@ -60,10 +61,9 @@ class Baccarat :
 
 
     def run(self) :
-        print("run again")
         self.new()
+
         self.playing = True 
-        self.paused = False 
         #control this game
         self.deal_finished = False
         self.need_one_more = False
@@ -82,16 +82,15 @@ class Baccarat :
 
             #play again?
             if self.game_over & (self.is_created==False) : 
+                self.user.get_score()
+                self.user.rank()
+                self.user.save_data()
+                for o in BET_OPTIONS : 
+                    CURRENT_BET[o] = 0
                 #Yes or No Button
                 self.yes_btn = Button(self, 'image/yes_btn.png', YES_BTN_LOCATION, YES_NO_BTN_SIZE, self.run) 
                 self.no_btn = Button(self, 'image/no_btn.png', NO_BTN_LOCATION, YES_NO_BTN_SIZE, self.quit) 
                 self.is_created = True 
-
-                # if self.play_again() : 
-                    # self.run()
-                # else:
-                    # break
-
 
     def quit(self) :
         pg.quit()
@@ -118,12 +117,13 @@ class Baccarat :
         self.record_table.update()
         self.cash_table.update()
         self.flag_sprites.update()
-        pg.display.flip() #draw 
+        pg.display.flip() #draw paper by paper
         
     def draw(self) :
         self.screen.fill(BLACK)
         self.all_sprites.draw(self.screen)
         self.clock.tick(FPS)
+        
 
         #deal card
         if self.finish_btn.is_clicked :
@@ -148,10 +148,7 @@ class Baccarat :
             if len(self.banker.cards) == 3 : 
                 self.card_list.append(Card(self, ('image/card_'+str(self.banker.cards[2])+'.png'), CARD_LOCATIONS[5][0],is_normal=False))
 
-        #record : show winner
-
 
 if __name__ == "__main__":
     baccarat = Baccarat()
-
     baccarat.run()

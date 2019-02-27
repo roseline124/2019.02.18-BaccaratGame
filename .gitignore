@@ -6,3 +6,4 @@ __pycache__
 ignore_files/
 backup_files/
 *.ipynb
+Todo.txt

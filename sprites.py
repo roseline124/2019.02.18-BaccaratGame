@@ -1,5 +1,6 @@
 from settings import *
-import sys 
+from user_profile import *
+import sys, pickle
 import pygame as pg
 
 class Background(pg.sprite.Sprite):
@@ -21,41 +22,65 @@ class Player(pg.sprite.Sprite) :
         self.value = ''
         self.record = {'win' : 0, 'lose' : 0, 'pair' : 0, 'tie' : 0 }  
 
-
+"""
 class User(pg.sprite.Sprite) :
     def __init__(self) :
         pg.sprite.Sprite.__init__(self)
+        self.user_profile = self.load_data()
+
+        self.seed_money = self.user_profile['SEED_MONEY']
+        self.grade = self.user_profile['GRADE']
+        self.score = self.user_profile['SCORE']
+
         self.earnings = 0
         self.loss = 0
 
-    def get_score(self, earnings, loss) :
-        USER_PROFILE['SCORE'] += int(round(earnings))
-        USER_PROFILE['SCORE'] -= loss 
+    def get_score(self) :
+        self.score += int(round(self.earnings))
+        self.score -= self.loss 
         
-        return USER_PROFILE['SCORE']
+        return self.score
 
     def rank(self) :
-        if USER_PROFILE['SCORE'] <= 150000 :
-            USER_PROFILE['GRADE'] = 'Bronze'
-        elif USER_PROFILE['SCORE'] <= 250000 : 
-            USER_PROFILE['GRADE'] = 'GOLD'
-        elif USER_PROFILE['SCORE'] <= 500000 : 
-            USER_PROFILE['GRADE'] = 'Platinum'
-        elif USER_PROFILE['SCORE'] <= 1000000 : 
-            USER_PROFILE['GRADE'] = 'Diamond'
-        elif USER_PROFILE['SCORE'] <= 2500000 : 
-            USER_PROFILE['GRADE'] = 'Master'
-        elif USER_PROFILE['SCORE'] > 5000000 : 
-            USER_PROFILE['GRADE'] = 'Grand Master'
+        if self.score <= 150000 :
+            self.grade = 'Bronze'
+        elif self.score <= 250000 : 
+            self.grade = 'GOLD'
+        elif self.score <= 500000 : 
+            self.grade = 'Platinum'
+        elif self.score <= 1000000 : 
+            self.grade = 'Diamond'
+        elif self.score <= 2500000 : 
+            self.grade = 'Master'
+        elif self.score > 5000000 : 
+            self.grade = 'Grand Master'
 
-        return USER_PROFILE['GRADE']
+        return self.grade
+
+    def load_data(self) :
+
+        with open('data/user_profile.p', "rb") as f :
+            loaded_user_profile = pickle.load(f)
+            print("load:", loaded_user_profile)
+
+            return loaded_user_profile
+
+    def save_data(self) :
+
+        with open('data/user_profile.p', 'wb') as f : 
+            USER_PROFILE = {'SEED_MONEY' : self.seed_money ,
+                            'GRADE' : self.grade,
+                            'SCORE' : self.score}
             
+            pickle.dump(USER_PROFILE, f)
+            print("write:", USER_PROFILE)
+"""
 class Chips(pg.sprite.Sprite) :
-    def __init__(self, game, chips) :
+    def __init__(self, game, chips_price) :
         self.groups = game.all_sprites
         pg.sprite.Sprite.__init__(self, self.groups)  #자기 자신과 baccarat로 부터 받은 그룹 초기화
         self.game = game 
-        self.chip = chips
+        self.chip_price = chips_price
         self.drag = False
         self.is_betted = False
         self.is_selected = False
@@ -75,9 +100,9 @@ class Chips(pg.sprite.Sprite) :
                 self.is_betted = True 
                 self.tb = self.rect.collidedict(tb_dict)
 
-                CURRENT_BET[self.tb[1]] += self.chip #베팅 금액 테이블에 올리기
-                USER_PROFILE['SEED_MONEY'] -= self.chip
-                print(CURRENT_BET,"|", USER_PROFILE['SEED_MONEY'])
+                CURRENT_BET[self.tb[1]] += self.chip_price #베팅 금액 테이블에 올리기
+                self.game.user.seed_money -= self.chip_price
+                print(CURRENT_BET,"|", self.game.user.seed_money)
     
     def mouse_down(self, event_pos) :
         if self.rect.collidepoint(event_pos) :
@@ -96,6 +121,7 @@ class Chips(pg.sprite.Sprite) :
             self.rect.y = offset[1] + self.pos_Y 
 
     def update(self) :
+
         for event in self.game.get_events :
             if event.type == pg.MOUSEBUTTONDOWN :
                 if event.button == 1 : #event type이 mouse인 경우에만 button 요소가 생기므로 if문 안에 써주는 게 맞다. 
@@ -108,10 +134,13 @@ class Chips(pg.sprite.Sprite) :
 
                     if self.game.finish_btn.is_clicked == False : 
                         self.bet(self.game.betting_table)
-            
+
             elif event.type == pg.MOUSEMOTION  : 
+
                 if self.drag : 
                     self.mouse_drag(event.pos, self.offset)
+
+
 
 class Card(pg.sprite.Sprite) :
     def __init__(self, game, image_file, card_location, is_normal=True) :

@@ -1,4 +1,5 @@
 from settings import *
+from user_profile import *
 import sys 
 import pygame as pg
 import random
@@ -18,7 +19,7 @@ class Bet_Table(pg.sprite.Sprite) :
     
     def show_bet(self) :
         self.bet_money = self.text.render( ("bet money :" + str(sum(CURRENT_BET.values()))),False,BLACK)
-        self.curr_money = self.text.render(("current money :"+str(USER_PROFILE['SEED_MONEY'])),False,BLACK)
+        self.curr_money = self.text.render(("current money :"+str(self.game.user.seed_money)),False,BLACK)
     
         self.game.screen.blit(self.bet_money, USER_PROFILE_LOCATION[0])
         self.game.screen.blit(self.curr_money, USER_PROFILE_LOCATION[1])
@@ -206,10 +207,10 @@ class Cash_Table(pg.sprite.Sprite) :
 
         #win & lose
         if self.winner == 'player' : 
-            self.user.earnings += CURRENT_BET['player']*2
+            self.user.earnings += CURRENT_BET['player']*2 
             CURRENT_BET['player'] = 0
         elif self.winner == 'banker' :
-            self.user.earnings += CURRENT_BET['banker']*1.95
+            self.user.earnings += CURRENT_BET['banker']*1.95 
             CURRENT_BET['banker'] = 0
             print("winner -- ")
         #tie
@@ -229,13 +230,11 @@ class Cash_Table(pg.sprite.Sprite) :
             CURRENT_BET['banker_pair'] = 0
             print("pair -- ")
 
-      
-        USER_PROFILE['SEED_MONEY'] += self.user.earnings
+        self.user.seed_money += self.user.earnings
         self.user.loss = sum(CURRENT_BET.values())
         self.is_paid = True 
         print("you got", self.user.earnings,"!")
         print("you lost", self.user.loss,"!")
-        # print("your money :", USER_PROFILE['SEED_MONEY'])
 
     def show_winner(self) :
         #text

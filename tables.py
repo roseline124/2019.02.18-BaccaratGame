@@ -1,8 +1,7 @@
 from settings import *
 from user_profile import *
-import sys 
+import sys, random 
 import pygame as pg
-import random
 
 class Bet_Table(pg.sprite.Sprite) :
     def __init__(self, game, image_file, location) :
@@ -18,16 +17,16 @@ class Bet_Table(pg.sprite.Sprite) :
         self.rect.x, self.rect.y = location
     
     def show_bet(self) :
-        self.bet_money = self.text.render( ("bet money :" + str(sum(CURRENT_BET.values()))),False,BLACK)
-        self.curr_money = self.text.render(("current money :"+str(self.game.user.seed_money)),False,BLACK)
-    
+        self.bet_money = self.text.render( ("bet money : " + str(sum(CURRENT_BET.values()))),False,BLACK)
+        self.curr_money = self.text.render(("current money : "+str(self.game.user.seed_money)),False,BLACK)
+        self.grade = self.text.render(("your grade : "+str(self.game.user.grade)), False, BLACK)
+
         self.game.screen.blit(self.bet_money, USER_PROFILE_LOCATION[0])
         self.game.screen.blit(self.curr_money, USER_PROFILE_LOCATION[1])
+        self.game.screen.blit(self.grade, USER_PROFILE_LOCATION[2])
 
     def update(self) :
         self.show_bet()
-
-
 
 class Card_Table(pg.sprite.Sprite) :
     def __init__(self, game) :

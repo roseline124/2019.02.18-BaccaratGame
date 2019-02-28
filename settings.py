@@ -1,5 +1,3 @@
-import pickle
-
 #Color
 BLACK = (0,0,0)
 RED = (255,0,0)
@@ -8,7 +6,6 @@ GRAY = (51,51,51)
 #Size
 SCREEN_SIZE = (800,500)
 CARD_SIZE = (120,180)
-FLAG_SIZE = (250,150)
 TB_SIZE = (100,150)
 CHIP_SIZE = (50,50)
 FIN_BTN_SIZE = (200,50)
@@ -45,9 +42,6 @@ NO_BTN_LOCATION = [200,425]
 
 BLIND_LOCATION = [SCREEN_SIZE[0]+100, 50]
 ONE_MORE_CARD_BLIND_LOCATION = [900, 240]
-FLAG_BLIND_LOCATION = [200,-200]
-
-FLAG_LOCATION = [200,100]
 
 CARD_LOCATIONS = [
         [50,50],
@@ -67,19 +61,18 @@ P_VALUE_LOCATION = (50, 265)
 B_VALUE_LOCATION = (380, 265)
 
 USER_PROFILE_LOCATION = [
-        (560, 330), #earnings
-        (560, 360), #bet money
-        (560, 390), #current money 
+        (560, 330), #bet money
+        (560, 360), #current money 
+        (560, 390), #grade
 ]
 
 RECORD_LOCATION = [
-        [200,100], #it has to move along with flag, that's why the type is list, not tuple
+        [200,100], #it has to move, that's why the type is list, not tuple
 ]
 
 FPS = 60
 
 CARD_SPEED = 300
-FLAG_SPEED = 300
 VX_TIME = 10 #속력 * vx_time(배수)
 VY_TIME = 10 #속력 * vx_time(배수)
 

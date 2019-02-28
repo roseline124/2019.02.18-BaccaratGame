@@ -1,14 +1,12 @@
 # coding = utf-8
-import sys
+import sys, time
 import pygame as pg
 from settings import *
 from tables import *
 from sprites import *
 from user_profile import *
 from pygame.locals import *
-import time
 
-#Baccarat.py
 class Baccarat : 
     def __init__(self) :
         pg.init()
@@ -21,7 +19,6 @@ class Baccarat :
         """init index equals blit index"""
         self.all_sprites = pg.sprite.Group() #sprites.group
         self.card_sprites = pg.sprite.Group() 
-        self.flag_sprites = pg.sprite.Group() 
         self.background = Background(self, 'image/background_image.png', (0,0))
         
         #gamers
@@ -42,7 +39,6 @@ class Baccarat :
         self.record_table = Record_table(self)
         self.cash_table = Cash_Table(self)
 
-
         #betting tables 
         self.tb_list = [Bet_Table(self,('image/tb_'+BET_OPTIONS[i]+'.png'), BETTING_POS[i]) for i in range(5)]
         self.betting_table = {}
@@ -57,13 +53,10 @@ class Baccarat :
         #trigger button #write func, instead of func()
         self.finish_btn = Button(self, 'image/finish_btn.png', FIN_BTN_LOCATION, FIN_BTN_SIZE)
 
-        self.flag = Flag(self, 'image/winner_flag.png')
-
-
     def run(self) :
         self.new()
-
         self.playing = True 
+
         #control this game
         self.deal_finished = False
         self.need_one_more = False
@@ -116,7 +109,6 @@ class Baccarat :
         self.card_table.update()
         self.record_table.update()
         self.cash_table.update()
-        self.flag_sprites.update()
         pg.display.flip() #draw paper by paper
         
     def draw(self) :
@@ -124,7 +116,6 @@ class Baccarat :
         self.all_sprites.draw(self.screen)
         self.clock.tick(FPS)
         
-
         #deal card
         if self.finish_btn.is_clicked :
             self.card_sprites.draw(self.screen)

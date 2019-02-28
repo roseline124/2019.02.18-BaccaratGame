@@ -22,59 +22,6 @@ class Player(pg.sprite.Sprite) :
         self.value = ''
         self.record = {'win' : 0, 'lose' : 0, 'pair' : 0, 'tie' : 0 }  
 
-"""
-class User(pg.sprite.Sprite) :
-    def __init__(self) :
-        pg.sprite.Sprite.__init__(self)
-        self.user_profile = self.load_data()
-
-        self.seed_money = self.user_profile['SEED_MONEY']
-        self.grade = self.user_profile['GRADE']
-        self.score = self.user_profile['SCORE']
-
-        self.earnings = 0
-        self.loss = 0
-
-    def get_score(self) :
-        self.score += int(round(self.earnings))
-        self.score -= self.loss 
-        
-        return self.score
-
-    def rank(self) :
-        if self.score <= 150000 :
-            self.grade = 'Bronze'
-        elif self.score <= 250000 : 
-            self.grade = 'GOLD'
-        elif self.score <= 500000 : 
-            self.grade = 'Platinum'
-        elif self.score <= 1000000 : 
-            self.grade = 'Diamond'
-        elif self.score <= 2500000 : 
-            self.grade = 'Master'
-        elif self.score > 5000000 : 
-            self.grade = 'Grand Master'
-
-        return self.grade
-
-    def load_data(self) :
-
-        with open('data/user_profile.p', "rb") as f :
-            loaded_user_profile = pickle.load(f)
-            print("load:", loaded_user_profile)
-
-            return loaded_user_profile
-
-    def save_data(self) :
-
-        with open('data/user_profile.p', 'wb') as f : 
-            USER_PROFILE = {'SEED_MONEY' : self.seed_money ,
-                            'GRADE' : self.grade,
-                            'SCORE' : self.score}
-            
-            pickle.dump(USER_PROFILE, f)
-            print("write:", USER_PROFILE)
-"""
 class Chips(pg.sprite.Sprite) :
     def __init__(self, game, chips_price) :
         self.groups = game.all_sprites
@@ -84,6 +31,7 @@ class Chips(pg.sprite.Sprite) :
         self.drag = False
         self.is_betted = False
         self.is_selected = False
+        self.location = None
     
     def make(self, image_file, location) :
         self.image = pg.image.load(image_file)
@@ -91,6 +39,8 @@ class Chips(pg.sprite.Sprite) :
 
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = location 
+        self.location = location
+
 
     def bet(self, tb_dict) : 
         self.is_selected = False
@@ -134,6 +84,12 @@ class Chips(pg.sprite.Sprite) :
 
                     if self.game.finish_btn.is_clicked == False : 
                         self.bet(self.game.betting_table)
+
+                        if self.is_betted :
+                            new_chip = Chips(self.game, self.chip_price)
+
+                            chip_name = [c_name for c_name in PLAY_CHIPS if PLAY_CHIPS[c_name] == self.chip_price][0] 
+                            new_chip.make(('image/'+chip_name+'.png'), self.location)
 
             elif event.type == pg.MOUSEMOTION  : 
 
@@ -200,36 +156,8 @@ class Button(pg.sprite.Sprite) :
                 else : 
                     self.func()
 
-
     def update(self) :
         for event in self.game.get_events : 
             if event.type == pg.MOUSEBUTTONDOWN : 
                 if (self.rect.collidepoint(event.pos)) & (event.button == 1) : 
                     self.clicked() 
-
-class Flag(pg.sprite.Sprite) :
-    def __init__(self, game, image_file) :
-        self.groups = game.flag_sprites
-        pg.sprite.Sprite.__init__(self, self.groups) 
-        self.game = game
-
-        self.image = pg.image.load(image_file)
-        self.image = pg.transform.scale(self.image, FLAG_SIZE)
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = FLAG_BLIND_LOCATION
-        self.vy = 0 
-      
-    def move_to(self) :
-        """move from blind_location to flag_location"""
-        self.vy = 0 
-
-        if (self.game.game_over) & (self.game.is_announced == False): 
-            self.vy = +FLAG_SPEED if self.rect.y < FLAG_LOCATION[1] else 0 
-            self.game.is_announced = True if self.rect.y > FLAG_LOCATION[1] else False
-
-        if self.vy != 0 : 
-            self.vy*= VY_TIME
-
-    def update(self) :
-        self.move_to()
-        self.rect.y += self.vy*self.game.dt 
